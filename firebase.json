@@ -1,0 +1,31 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "mensajeria-gt",
+          "appId": "1:172815875090:android:8bf0aaae329be81305accb",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "mensajeria-gt",
+          "configurations": {
+            "android": "1:172815875090:android:8bf0aaae329be81305accb",
+            "ios": "1:172815875090:ios:ffe85d20e00746db05accb"
+          }
+        }
+      }
+    }
+  },
+  "emulators": {
+    "auth": {
+      "port": 9099
+    },
+    "ui": {
+      "enabled": true
+    },
+    "singleProjectMode": true
+  }
+}

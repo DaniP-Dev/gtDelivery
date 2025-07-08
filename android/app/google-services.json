@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "172815875090",
+    "project_id": "mensajeria-gt",
+    "storage_bucket": "mensajeria-gt.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:172815875090:android:8bf0aaae329be81305accb",
+        "android_client_info": {
+          "package_name": "com.gt.mensajeria_gt"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "172815875090-oljh3p5gf7s478rbv1leh74rahpinn6p.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gt.mensajeria_gt",
+            "certificate_hash": "9299625dad75080baf39fe1d464c53cceb4a2c66"
+          }
+        },
+        {
+          "client_id": "172815875090-6onq8nhplltqne5la6l31clj2p8so356.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAGVvdSKy3brc8Bi8m52HDba07LZ3BCJSo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "172815875090-6onq8nhplltqne5la6l31clj2p8so356.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "172815875090-6h53i4e7r7gidope7ti1obrpsjvvgikm.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.gt.mensajeriaGt"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
