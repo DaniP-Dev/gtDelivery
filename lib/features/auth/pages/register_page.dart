@@ -51,6 +51,23 @@ class _RegisterPageState extends State<RegisterPage> {
               onPressed: () => authProvider.register(_emailController.text, _passwordController.text),
               child: const Text('Registrar'),
             ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: authProvider.signInWithGoogle,
+              icon: const Icon(Icons.account_circle),
+              label: const Text('Registrar con Google'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Volver al Login'),
+            ),
             const SizedBox(height: 24),
             Container(
               padding: const EdgeInsets.all(16),

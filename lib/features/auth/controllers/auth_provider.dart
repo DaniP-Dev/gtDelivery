@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import '../../../core/services/auth_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
   String status = '';
-  GoogleSignInAccount? googleUser;
+  User? firebaseUser;
 
   AuthProvider() {
     _authService.authStateChanges.listen((User? user) {
+      firebaseUser = user;
       if (user == null) {
         status = 'No autenticado';
       } else {
@@ -17,20 +17,6 @@ class AuthProvider extends ChangeNotifier {
       }
       notifyListeners();
     });
-  }
-
-  Future<void> initializeGoogleSignIn(String serverClientId) async {
-    await _authService.initializeGoogleSignIn(
-      serverClientId: serverClientId,
-      onUserChanged: (user) {
-        googleUser = user;
-        notifyListeners();
-      },
-      onError: (msg) {
-        status = msg;
-        notifyListeners();
-      },
-    );
   }
 
   Future<void> register(String email, String password) async {
@@ -52,7 +38,7 @@ class AuthProvider extends ChangeNotifier {
       status = msg;
       notifyListeners();
     }, (user) {
-      googleUser = user;
+      firebaseUser = user;
       notifyListeners();
     });
   }
@@ -62,7 +48,7 @@ class AuthProvider extends ChangeNotifier {
       status = msg;
       notifyListeners();
     });
-    googleUser = null;
+    firebaseUser = null;
     notifyListeners();
   }
 }

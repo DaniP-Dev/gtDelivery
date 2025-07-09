@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/auth_provider.dart';
+import 'register_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key, required this.title});
@@ -17,8 +18,6 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    authProvider.initializeGoogleSignIn('172815875090-6onq8nhplltqne5la6l31clj2p8so356.apps.googleusercontent.com');
   }
 
   @override
@@ -56,7 +55,14 @@ class _LoginPageState extends State<LoginPage> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton(
-                  onPressed: () => authProvider.register(_emailController.text, _passwordController.text),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const RegisterPage(title: 'Registro'),
+                      ),
+                    );
+                  },
                   child: const Text('Registrar'),
                 ),
                 ElevatedButton(

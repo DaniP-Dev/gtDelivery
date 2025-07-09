@@ -1,37 +1,33 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
-  GoogleSignInAccount? googleUser;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  Future<void> initializeGoogleSignIn({required String serverClientId, required Function(GoogleSignInAccount?) onUserChanged, required Function(String) onError}) async {
+  Future<void> register(
+    String email,
+    String password,
+    Function(String) onStatus,
+  ) async {
     try {
-      await _googleSignIn.initialize(
-        serverClientId: serverClientId,
-      );
-      _googleSignIn.authenticationEvents.listen((event) {
-        googleUser = switch (event) {
-          GoogleSignInAuthenticationEventSignIn() => event.user,
-          GoogleSignInAuthenticationEventSignOut() => null,
-        };
-        onUserChanged(googleUser);
-      });
-      _googleSignIn.attemptLightweightAuthentication();
-    } catch (e) {
-      onError('Error inicializando Google Sign-In: $e');
-    }
-  }
-
-  Future<void> register(String email, String password, Function(String) onStatus) async {
-    try {
-      await _auth.createUserWithEmailAndPassword(
+      final credential = await _auth.createUserWithEmailAndPassword(
         email: email.trim(),
         password: password.trim(),
       );
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(credential.user!.uid)
+          .set({
+        'uid': credential.user!.uid,
+        'email': credential.user!.email,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
       onStatus('Registro exitoso');
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
@@ -42,11 +38,15 @@ class AuthService {
         onStatus(e.message ?? 'Error desconocido');
       }
     } catch (e) {
-      onStatus(e.toString());
+      onStatus('Error: $e');
     }
   }
 
-  Future<void> login(String email, String password, Function(String) onStatus) async {
+  Future<void> login(
+    String email,
+    String password,
+    Function(String) onStatus,
+  ) async {
     try {
       await _auth.signInWithEmailAndPassword(
         email: email.trim(),
@@ -62,32 +62,51 @@ class AuthService {
         onStatus(e.message ?? 'Error desconocido');
       }
     } catch (e) {
-      onStatus(e.toString());
+      onStatus('Error: $e');
     }
   }
 
-  Future<void> signInWithGoogle(Function(String) onStatus, Function(GoogleSignInAccount?) onUserChanged) async {
+  Future<void> signInWithGoogle(
+    Function(String) onStatus,
+    Function(User?) onUserChanged,
+  ) async {
     try {
-      onStatus('Iniciando Google Sign-In...');
-      if (!_googleSignIn.supportsAuthenticate()) {
-        onStatus('Esta plataforma no soporta autenticación con Google');
-        return;
-      }
-      await _googleSignIn.authenticate();
-      await Future.delayed(Duration(milliseconds: 500));
+      // Inicia el flujo de Google Sign-In
+      final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
-        onStatus('Login cancelado o falló');
+        onStatus('Login cancelado');
         return;
       }
-      final Map<String, String>? headers = await googleUser!.authorizationClient.authorizationHeaders(['email', 'profile']);
-      if (headers == null) {
-        onStatus('No se pudo obtener autorización');
-        return;
+
+      // Obtiene tokens de autenticación
+      final googleAuth = await googleUser.authentication;
+
+      // Crea credencial para Firebase
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Inicia sesión en Firebase
+      final userCredential =
+          await _auth.signInWithCredential(credential);
+
+      // Si es un nuevo usuario, lo guarda en Firestore
+      if (userCredential.additionalUserInfo?.isNewUser ?? false) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .set({
+          'uid': userCredential.user!.uid,
+          'email': userCredential.user!.email,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
       }
-      onStatus('Google Sign-In exitoso: ${googleUser!.displayName ?? googleUser!.email}');
-      onUserChanged(googleUser);
-    } on GoogleSignInException catch (e) {
-      onStatus('Error de Google Sign-In: ${e.description}');
+
+      onStatus('Google Sign-In exitoso: ${userCredential.user?.email}');
+      onUserChanged(userCredential.user);
+    } on FirebaseAuthException catch (e) {
+      onStatus('Error Firebase Auth: ${e.message}');
     } catch (e) {
       onStatus('Error en Google Sign-In: $e');
     }
@@ -95,8 +114,7 @@ class AuthService {
 
   Future<void> logout(Function(String) onStatus) async {
     await _auth.signOut();
-    await _googleSignIn.disconnect();
+    await _googleSignIn.signOut();
     onStatus('Sesión cerrada');
-    googleUser = null;
   }
 }
