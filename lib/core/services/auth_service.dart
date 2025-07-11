@@ -8,11 +8,7 @@ class AuthService {
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  Future<void> register(
-    String email,
-    String password,
-    Function(String) onStatus,
-  ) async {
+  Future<bool> register(String email, String password) async {
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email.trim(),
@@ -28,87 +24,48 @@ class AuthService {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      onStatus('Registro exitoso');
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'weak-password') {
-        onStatus('La contraseña es muy débil.');
-      } else if (e.code == 'email-already-in-use') {
-        onStatus('El correo ya está en uso.');
-      } else {
-        onStatus(e.message ?? 'Error desconocido');
-      }
-    } catch (e) {
-      onStatus('Error: $e');
+      return true;
+    } on FirebaseAuthException {
+      return false;
+    } catch (_) {
+      return false;
     }
   }
 
-  Future<void> login(
+  Future<bool> login(
     String email,
     String password,
-    Function(String) onStatus,
   ) async {
     try {
       await _auth.signInWithEmailAndPassword(
-        email: email.trim(),
-        password: password.trim(),
-      );
-      onStatus('Login exitoso');
+          email: email.trim(), password: password.trim());
+      return true; // Usuario existe y login correcto
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {
-        onStatus('No existe usuario para ese correo.');
-      } else if (e.code == 'wrong-password') {
-        onStatus('Contraseña incorrecta.');
-      } else {
-        onStatus(e.message ?? 'Error desconocido');
+        return false; // Usuario no existe
       }
-    } catch (e) {
-      onStatus('Error: $e');
+      if (e.code == 'wrong-password') {
+        return false; // Contraseña incorrecta
+      }
+      rethrow;
     }
   }
 
-  Future<void> signInWithGoogle(
-    Function(String) onStatus,
-    Function(User?) onUserChanged,
-  ) async {
+  Future<User?> signInWithGoogle() async {
     try {
-      // Inicia el flujo de Google Sign-In
-      final googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        onStatus('Login cancelado');
-        return;
-      }
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) return null;
 
-      // Obtiene tokens de autenticación
-      final googleAuth = await googleUser.authentication;
-
-      // Crea credencial para Firebase
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      // Inicia sesión en Firebase
-      final userCredential =
-          await _auth.signInWithCredential(credential);
-
-      // Si es un nuevo usuario, lo guarda en Firestore
-      if (userCredential.additionalUserInfo?.isNewUser ?? false) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(userCredential.user!.uid)
-            .set({
-          'uid': userCredential.user!.uid,
-          'email': userCredential.user!.email,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-      }
-
-      onStatus('Google Sign-In exitoso: ${userCredential.user?.email}');
-      onUserChanged(userCredential.user);
-    } on FirebaseAuthException catch (e) {
-      onStatus('Error Firebase Auth: ${e.message}');
-    } catch (e) {
-      onStatus('Error en Google Sign-In: $e');
+      final userCredential = await _auth.signInWithCredential(credential);
+      return userCredential.user;
+    } catch (_) {
+      return null;
     }
   }
 
