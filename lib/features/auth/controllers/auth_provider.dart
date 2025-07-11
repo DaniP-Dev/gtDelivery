@@ -6,6 +6,7 @@ class AuthProvider extends ChangeNotifier {
 
   String _status = '';
   String get status => _status;
+  String get userName => _authService.userName ?? 'Usuario';
 
   Future<bool> login(String email, String password) async {
     final result = await _authService.login(email, password);

@@ -74,4 +74,9 @@ class AuthService {
     await _googleSignIn.signOut();
     onStatus('Sesión cerrada');
   }
+
+  String? get userName {
+    final user = FirebaseAuth.instance.currentUser;
+    return user?.displayName ?? user?.email ?? 'Usuario';
+  }
 }
